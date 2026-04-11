@@ -81,7 +81,7 @@ input:checked+.excl-slider::before{left:18px;background:var(--red)}
 .srow{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:16px}
 .sc{background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:13px 15px;position:relative;overflow:hidden;transition:background .2s}
 .sc::after{content:"";position:absolute;top:0;left:0;right:0;height:2px}
-.sc.cb::after{background:var(--acc)}.sc.ct::after{background:var(--teal)}.sc.ca::after{background:var(--amb)}.sc.cg::after{background:var(--grn)}.sc.cp::after{background:var(--purp)}
+.sc.cb::after{background:var(--acc)}.sc.ct::after{background:var(--teal)}.sc.ca::after{background:var(--amb)}.sc.cg::after{background:var(--grn)}
 .sl{font-size:10px;color:var(--tx2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
 .sv{font-size:22px;font-weight:300;letter-spacing:-0.5px}
 .ss{font-size:11px;color:var(--tx2);margin-top:2px}
@@ -91,7 +91,7 @@ input:checked+.excl-slider::before{left:18px;background:var(--red)}
 .cw{position:relative;width:100%;height:200px}
 .meas-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:15px;margin-bottom:16px;transition:background .2s}
 .meas-title{font-size:11px;font-weight:500;color:var(--tx2);font-family:var(--mono);margin-bottom:12px}
-.meas-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.meas-grid{display:grid;gap:10px}
 .meas-item{background:var(--bg3);border-radius:8px;padding:10px 12px;text-align:center}
 .meas-label{font-size:10px;color:var(--tx2);font-family:var(--mono);text-transform:uppercase;margin-bottom:4px}
 .meas-val{font-size:16px;font-weight:300;font-family:var(--mono)}
@@ -111,7 +111,6 @@ tbody td{padding:8px 11px;color:var(--tx);white-space:nowrap;max-width:160px;ove
 .tm{font-family:var(--mono);font-size:11px;color:var(--tx)}
 .bl{display:inline-block;padding:1px 7px;border-radius:3px;font-size:10px;font-family:var(--mono)}
 .b1{background:rgba(59,130,246,.15);color:#60a5fa}
-.b2{background:rgba(20,184,166,.15);color:#14b8a6}
 .b3{background:rgba(245,158,11,.15);color:#f59e0b}
 .pgn{display:flex;align-items:center;gap:5px;padding:10px 15px;border-top:1px solid var(--bdr);justify-content:flex-end;flex-wrap:wrap}
 .pb{background:var(--bg3);border:1px solid var(--bdr);color:var(--tx2);min-width:28px;height:28px;padding:0 6px;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;transition:all .12s;font-family:var(--mono)}
@@ -119,8 +118,8 @@ tbody td{padding:8px 11px;color:var(--tx);white-space:nowrap;max-width:160px;ove
 .pb.active{background:var(--acc);border-color:var(--acc);color:white}
 .pb:disabled{opacity:.3;cursor:not-allowed}
 .pi{font-size:11px;color:var(--tx2);font-family:var(--mono);margin:0 4px}
-@media(max-width:900px){.srow{grid-template-columns:repeat(3,1fr)}.cgrid{grid-template-columns:1fr}.meas-grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:600px){.srow{grid-template-columns:repeat(2,1fr)}.main{padding:12px 14px}}
+@media(max-width:900px){.srow{grid-template-columns:repeat(2,1fr)}.cgrid{grid-template-columns:1fr}.meas-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.main{padding:12px 14px}}
 </style>
 </head>
 <body>
@@ -152,14 +151,13 @@ tbody td{padding:8px 11px;color:var(--tx);white-space:nowrap;max-width:160px;ove
     <div class="fhead" onclick="toggleFilters()">
       <div class="fhead-left">
         <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-        필터
-        <span class="fcount" id="fcount">0</span>
+        필터 <span class="fcount" id="fcount">0</span>
       </div>
       <span class="ftoggle" id="ftoggle">▲ 접기</span>
     </div>
     <div class="fbody" id="fbody">
       <div class="fg" style="grid-column:span 2">
-        <div class="fl">Vessel Type (체크박스 선택)</div>
+        <div class="fl">Vessel Type (체크박스 선택 또는 차트 클릭)</div>
         <input class="vtype-search" type="text" id="vtype-search" placeholder="종류 검색...">
         <div class="vtype-box" id="vtype-box"></div>
         <div class="excl-row">
@@ -167,9 +165,6 @@ tbody td{padding:8px 11px;color:var(--tx);white-space:nowrap;max-width:160px;ove
           <span class="excl-label">제외 모드 — 선택 항목을 제외하고 보기</span>
         </div>
       </div>
-
-
-
       <div class="fg">
         <div class="fl">건조 연도</div>
         <div class="range-row">
@@ -186,7 +181,6 @@ tbody td{padding:8px 11px;color:var(--tx);white-space:nowrap;max-width:160px;ove
           <input type="number" id="f-gt-max" placeholder="Max">
         </div>
       </div>
-
       <div class="fg">
         <div class="fl">LOA (m)</div>
         <div class="range-row">
@@ -230,21 +224,21 @@ tbody td{padding:8px 11px;color:var(--tx);white-space:nowrap;max-width:160px;ove
   </div>
 
   <div class="meas-card">
-    <div class="meas-title">치수 요약 (필터 결과 기준 평균값)</div>
+    <div class="meas-title">치수 요약 (필터 결과 기준 평균값, 0 제외)</div>
     <div class="meas-grid" style="grid-template-columns:repeat(4,1fr)">
-      <div class="meas-item"><div class="meas-label">Gross Tonnage</div><div class="meas-val" id="m-gt">—</div><div class="meas-unit">avg (0 제외)</div></div>
-      <div class="meas-item"><div class="meas-label">Width</div><div class="meas-val" id="m-wid">—</div><div class="meas-unit">m avg (0 제외)</div></div>
-      <div class="meas-item"><div class="meas-label">Depth</div><div class="meas-val" id="m-dep">—</div><div class="meas-unit">m avg (0 제외)</div></div>
-      <div class="meas-item"><div class="meas-label">LOA</div><div class="meas-val" id="m-loa">—</div><div class="meas-unit">m avg (0 제외)</div></div>
+      <div class="meas-item"><div class="meas-label">Gross Tonnage</div><div class="meas-val" id="m-gt">—</div><div class="meas-unit">avg</div></div>
+      <div class="meas-item"><div class="meas-label">Width</div><div class="meas-val" id="m-wid">—</div><div class="meas-unit">m avg</div></div>
+      <div class="meas-item"><div class="meas-label">Depth</div><div class="meas-val" id="m-dep">—</div><div class="meas-unit">m avg</div></div>
+      <div class="meas-item"><div class="meas-label">LOA</div><div class="meas-val" id="m-loa">—</div><div class="meas-unit">m avg</div></div>
     </div>
   </div>
 
   <div class="cgrid">
     <div class="cc"><div class="ctitle">건조 연도별 추이</div><div class="cw" id="cw-year" style="height:300px"><canvas id="c-year" role="img" aria-label="건조 연도별 선박 수"></canvas></div></div>
-    <div class="cc"><div class="ctitle">Vessel Type TOP 15</div><div class="cw" style="height:300px"><canvas id="c-vtype" role="img" aria-label="vessel type 막대"></canvas></div></div>
-    <div class="cc" style="display:none"><div class="ctitle">엔진 타입 분포</div><div class="cw"><canvas id="c-hull" role="img" aria-label="선체 재질 도넛"></canvas></div></div>
-    <div class="cc" style="display:none"><div class="ctitle">엔진명 TOP 12</div><div class="cw" style="height:300px"><canvas id="c-cat" role="img" aria-label="카테고리별 막대"></canvas></div></div>
-    <div class="cc"><div class="ctitle">국적(Flag State) TOP 12</div><div class="cw" style="height:260px"><canvas id="c-port" role="img" aria-label="선적항 상위"></canvas></div></div>
+    <div class="cc"><div class="ctitle">Vessel Type TOP 15 <span style="font-size:10px;color:var(--tx3);font-weight:400">(클릭 필터)</span></div><div class="cw" style="height:300px"><canvas id="c-vtype" role="img" aria-label="vessel type 막대"></canvas></div></div>
+    <div class="cc" style="display:none"><div class="ctitle">엔진 타입 분포</div><div class="cw"><canvas id="c-hull" role="img" aria-label="엔진 타입 도넛"></canvas></div></div>
+    <div class="cc" style="display:none"><div class="ctitle">엔진명 TOP 12</div><div class="cw" style="height:300px"><canvas id="c-cat" role="img" aria-label="엔진명 막대"></canvas></div></div>
+    <div class="cc"><div class="ctitle" data-chart="c-port">국적(Flag State) TOP 12</div><div class="cw" style="height:260px"><canvas id="c-port" role="img" aria-label="국적 상위"></canvas></div></div>
     <div class="cc"><div class="ctitle">Gross Tonnage 분포</div><div class="cw"><canvas id="c-ton" role="img" aria-label="톤수 분포"></canvas></div></div>
   </div>
 
@@ -268,9 +262,11 @@ const COLS=[
   {k:"gross_tonnage",l:"GT"},{k:"width",l:"Width(m)"},
   {k:"depth",l:"Depth(m)"},{k:"length_overall",l:"LOA(m)"},
   {k:"flag_state",l:"국적"},{k:"engine_power_hp",l:"HP"},
+  {k:"engine_name",l:"엔진명"},{k:"engine_type",l:"엔진타입"},
 ];
 
 let loaded={},curData=[],filtered=[],curGrp="__all__",charts={},page=1,sortCol=null,sortDir=1;
+let excludedFlags=new Set();
 const PG=100;
 let isDark=false;
 
@@ -279,7 +275,7 @@ function toggleTheme(){
   document.documentElement.setAttribute("data-theme",isDark?"dark":"light");
   document.getElementById("icon-sun").style.display=isDark?"none":"block";
   document.getElementById("icon-moon").style.display=isDark?"block":"none";
-  const tc=isDark?"#64748b":"#9ca3af", gc=isDark?"rgba(255,255,255,.05)":"rgba(0,0,0,.06)";
+  const tc=isDark?"#cbd5e1":"#1e293b", gc=isDark?"rgba(255,255,255,.08)":"rgba(0,0,0,.09)";
   Object.values(charts).forEach(c=>{
     ["x","y"].forEach(ax=>{
       if(c.options.scales?.[ax]){
@@ -287,7 +283,7 @@ function toggleTheme(){
         c.options.scales[ax].grid&&(c.options.scales[ax].grid.color=gc);
       }
     });
-    if(c.options.plugins?.legend?.labels) c.options.plugins.legend.labels.color=isDark?"#94a3b8":"#64748b";
+    if(c.options.plugins?.legend?.labels) c.options.plugins.legend.labels.color=isDark?"#cbd5e1":"#1e293b";
     c.update();
   });
 }
@@ -309,8 +305,7 @@ function toggleFilters(){
     nav.appendChild(btn);
   });
   document.querySelector('.gtab[data-grp="__all__"]').onclick=()=>{
-    curGrp=null;  // early return 방지
-    selectGroup("__all__");
+    curGrp=null; selectGroup("__all__");
   };
 })();
 
@@ -323,7 +318,6 @@ async function selectGroup(grp){
 }
 
 async function loadGroup(grp){
-  // 로드할 파일 목록 (중복 제거)
   const seen=new Set();
   let files=[];
   if(grp==="__all__"){
@@ -386,7 +380,7 @@ document.getElementById("vtype-search").oninput=function(){
 document.getElementById("vtype-excl").onchange=applyFilters;
 
 function getUniq(key){const s=new Set();curData.forEach(r=>{if(r[key])s.add(String(r[key]));});return[...s].sort();}
-function popSel(id,items){const el=document.getElementById(id);el.innerHTML='<option value="">전체</option>';items.forEach(v=>el.innerHTML+=`<option value="${v}">${v}</option>`);}
+function popSel(id,items){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">전체</option>';items.forEach(v=>el.innerHTML+=`<option value="${v}">${v}</option>`);}
 function initSelects(){}
 
 ["f-yr-from","f-yr-to","f-gt-min","f-gt-max","f-w-min","f-w-max","f-d-min","f-d-max","f-loa-min","f-loa-max"].forEach(id=>document.getElementById(id).addEventListener("input",debounce(applyFilters,280)));
@@ -395,10 +389,20 @@ document.getElementById("btn-reset").addEventListener("click",()=>resetFilters(f
 
 function resetFilters(silent){
   selectedVTypes.clear();
+  excludedFlags.clear();
   document.querySelectorAll(".vtype-item input").forEach(cb=>cb.checked=false);
   document.getElementById("vtype-excl").checked=false;
   ["f-yr-from","f-yr-to","f-gt-min","f-gt-max","f-w-min","f-w-max","f-d-min","f-d-max","f-loa-min","f-loa-max","f-q"].forEach(id=>document.getElementById(id).value="");
   if(!silent)applyFilters();
+}
+
+function parseYear(v){
+  if(!v||v==="")return NaN;
+  const s=String(v).trim();
+  const n=+s;
+  if(!isNaN(n)&&n>1800&&n<=2030)return n;
+  const m=s.match(/^(\d{4})/);
+  return m?+m[1]:NaN;
 }
 
 function applyFilters(){
@@ -442,14 +446,6 @@ function renderAll(){renderStats();renderMeas();renderCharts();renderTable();}
 function avg(arr){return arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:null;}
 function fmtAvg(v,dec=1){if(v===null)return"—";return v>=1000?(v/1000).toFixed(1)+"k":v.toFixed(dec);}
 
-function parseYear(v){
-  if(!v||v==="")return NaN;
-  const s=String(v).trim();
-  const n=+s;
-  if(!isNaN(n)&&n>1800&&n<=2030)return n;
-  const m=s.match(/^(\d{4})/);
-  return m?+m[1]:NaN;
-}
 function renderStats(){
   const rows=filtered;
   document.getElementById("s-cnt").textContent=rows.length.toLocaleString();
@@ -461,12 +457,10 @@ function renderStats(){
   const yrAvg=yrs.length?Math.round(yrs.reduce((a,b)=>a+b,0)/yrs.length):null;
   document.getElementById("s-yr").textContent=yrAvg!==null?yrAvg+"년":"—";
   document.getElementById("s-yr-s").textContent=yrs.length?Math.min(...yrs)+"~"+Math.max(...yrs)+" (평균)":"";
-
 }
 
 function renderMeas(){
   const rows=filtered;
-  // 0값 및 NaN 모두 제외한 평균 계산
   const posNum=(key)=>rows.map(r=>parseFloat(r[key])).filter(v=>!isNaN(v)&&v>0);
   const gt=posNum("gross_tonnage");
   const wd=posNum("width");
@@ -488,6 +482,7 @@ function gridColor(){return isDark?"rgba(255,255,255,.08)":"rgba(0,0,0,.09)";}
 function legColor(){return isDark?"#cbd5e1":"#1e293b";}
 
 function renderCharts(){
+  // 건조 연도
   const yc={};
   filtered.forEach(r=>{const y=parseYear(r.built_year);if(!isNaN(y)&&y>1900&&y<=2030)yc[y]=(yc[y]||0)+1;});
   const yks=Object.keys(yc).sort();
@@ -498,44 +493,65 @@ function renderCharts(){
       plugins:{legend:{display:false},tooltip:{mode:"index",intersect:false,callbacks:{title:i=>i[0].label+"년",label:i=>i.parsed.y.toLocaleString()+"척"}}},
       scales:{x:{ticks:{color:tickColor(),font:{size:10},autoSkip:true,maxTicksLimit:14},grid:{display:false}},y:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false}}}}});
 
+  // Vessel Type - 클릭으로 필터
   const vt=cntBy(filtered,"vessel_type",15);
   dst("c-vtype");
   const vh=Math.max(vt.length*28+60,180);
   document.getElementById("c-vtype").parentElement.style.height=vh+"px";
   document.getElementById("cw-year").style.height=vh+"px";
   charts["c-vtype"]=new Chart(document.getElementById("c-vtype"),{type:"bar",
-    data:{labels:vt.map(x=>x[0]),datasets:[{data:vt.map(x=>x[1]),backgroundColor:CLR.map(c=>c+"bb"),borderColor:CLR,borderWidth:1,borderRadius:3}]},
+    data:{labels:vt.map(x=>x[0]),datasets:[{data:vt.map(x=>x[1]),
+      backgroundColor:vt.map(x=>selectedVTypes.has(x[0])?"#3b82f6":"#3b82f6bb"),
+      borderColor:vt.map(x=>selectedVTypes.has(x[0])?"#3b82f6":"#3b82f688"),
+      borderWidth:vt.map(x=>selectedVTypes.has(x[0])?2:1),borderRadius:3}]},
     options:{responsive:true,maintainAspectRatio:false,indexAxis:"y",
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.parsed.x.toLocaleString()+"척"}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.parsed.x.toLocaleString()+"척 (클릭하여 필터)"}}},
+      onClick:(e,els)=>{
+        if(!els.length)return;
+        const label=vt[els[0].index][0];
+        if(selectedVTypes.has(label))selectedVTypes.delete(label);
+        else selectedVTypes.add(label);
+        document.querySelectorAll(".vtype-item input").forEach(cb=>{cb.checked=selectedVTypes.has(cb.value);});
+        applyFilters();
+      },
       scales:{x:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false}},y:{ticks:{color:legColor(),font:{size:10}},grid:{display:false}}}}});
 
-  const et=cntBy(filtered,"engine_type",8);
+  // 엔진 타입 (숨김)
   dst("c-hull");
-  charts["c-hull"]=new Chart(document.getElementById("c-hull"),{type:"doughnut",
-    data:{labels:et.map(x=>x[0]),datasets:[{data:et.map(x=>x[1]),backgroundColor:CLR.map(c=>c+"cc"),borderColor:"transparent",borderWidth:2}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:"58%",
-      plugins:{legend:{display:true,position:"right",labels:{color:legColor(),font:{size:10},boxWidth:10,padding:8}},tooltip:{callbacks:{label:i=>i.label+": "+i.parsed.toLocaleString()+"척"}}}}});
-
-  const en=cntBy(filtered,"engine_name",12);
+  // 엔진명 (숨김)
   dst("c-cat");
-  const ch=Math.max(en.length*28+60,180);
-  document.getElementById("c-cat").parentElement.style.height=ch+"px";
-  charts["c-cat"]=new Chart(document.getElementById("c-cat"),{type:"bar",
-    data:{labels:en.map(x=>x[0]),datasets:[{data:en.map(x=>x[1]),backgroundColor:"#f59e0bbb",borderColor:"#f59e0b",borderWidth:1,borderRadius:3}]},
-    options:{responsive:true,maintainAspectRatio:false,indexAxis:"y",
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.parsed.x.toLocaleString()+"척"}}},
-      scales:{x:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false}},y:{ticks:{color:legColor(),font:{size:10}},grid:{display:false}}}}});
 
-  const fs=cntBy(filtered,"flag_state",12);
+  // Flag State - 클릭으로 숨기기
+  const fsBase=curData.filter(r=>{
+    if(selectedVTypes.size>0){
+      const excl=document.getElementById("vtype-excl").checked;
+      const match=selectedVTypes.has(r.vessel_type||"");
+      if(excl&&match)return false;
+      if(!excl&&!match)return false;
+    }
+    return true;
+  });
+  const fsAll=cntBy(fsBase,"flag_state",20);
+  const fsTop=fsAll.filter(x=>!excludedFlags.has(x[0])).slice(0,12);
   dst("c-port");
-  const ph=Math.max(fs.length*28+60,180);
+  const ph=Math.max(fsTop.length*28+60,180);
   document.getElementById("c-port").parentElement.style.height=ph+"px";
+  const portTitleEl=document.querySelector('.ctitle[data-chart="c-port"]');
+  if(portTitleEl)portTitleEl.textContent="국적(Flag State)"+(excludedFlags.size>0?" ("+excludedFlags.size+"개 숨김)":"")+" TOP 12";
   charts["c-port"]=new Chart(document.getElementById("c-port"),{type:"bar",
-    data:{labels:fs.map(x=>x[0]),datasets:[{data:fs.map(x=>x[1]),backgroundColor:"#a78bfabb",borderColor:"#a78bfa",borderWidth:1,borderRadius:3}]},
+    data:{labels:fsTop.map(x=>x[0]),datasets:[{data:fsTop.map(x=>x[1]),backgroundColor:"#a78bfabb",borderColor:"#a78bfa",borderWidth:1,borderRadius:3}]},
     options:{responsive:true,maintainAspectRatio:false,indexAxis:"y",
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.parsed.x.toLocaleString()+"척"}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.parsed.x.toLocaleString()+"척 (클릭하여 숨기기)"}}},
+      onClick:(e,els)=>{
+        if(!els.length)return;
+        const label=fsTop[els[0].index][0];
+        excludedFlags.has(label)?excludedFlags.delete(label):excludedFlags.add(label);
+        renderCharts();
+      },
       scales:{x:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false}},y:{ticks:{color:legColor(),font:{size:10}},grid:{display:false}}}}});
+  renderFlagTags(fsAll);
 
+  // GT 분포
   dst("c-ton");
   const gtVals=filtered.map(r=>+r.gross_tonnage).filter(v=>v>0&&!isNaN(v));
   const bins=[0,100,500,1000,5000,10000,50000,100000,Infinity];
@@ -550,6 +566,29 @@ function renderCharts(){
 }
 
 function dst(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function renderFlagTags(fsAll){
+  let el=document.getElementById("flag-tags");
+  if(!el){
+    el=document.createElement("div");
+    el.id="flag-tags";
+    el.style.cssText="display:flex;flex-wrap:wrap;gap:5px;padding:8px 0 4px;";
+    const portCard=document.getElementById("c-port").closest(".cc");
+    portCard.appendChild(el);
+  }
+  el.innerHTML="";
+  if(excludedFlags.size===0){
+    el.innerHTML='<span style="font-size:11px;color:var(--tx3)">클릭으로 국적 숨기기/표시</span>';
+    return;
+  }
+  excludedFlags.forEach(flag=>{
+    const tag=document.createElement("span");
+    tag.style.cssText="font-size:11px;font-family:var(--mono);background:rgba(239,68,68,.15);color:#f87171;padding:2px 8px;border-radius:12px;cursor:pointer;border:1px solid rgba(239,68,68,.3)";
+    tag.textContent="✕ "+flag;
+    tag.onclick=()=>{excludedFlags.delete(flag);renderCharts();};
+    el.appendChild(tag);
+  });
+}
 
 function renderTable(){
   let rows=[...filtered];
@@ -571,7 +610,6 @@ function renderTable(){
     document.getElementById("tb").innerHTML=sl.map(row=>"<tr>"+COLS.map(col=>{
       let v=row[col.k];if(v===null||v===undefined||v==="")v="—";
       if(col.k==="vessel_type")return`<td><span class="bl b1">${v}</span></td>`;
-      if(col.k==="hull_material")return`<td><span class="bl b3">${v}</span></td>`;
       if(NUMERIC_COLS.has(col.k))return`<td class="tm">${v!=="—"?Number(v).toLocaleString():"—"}</td>`;
       return`<td title="${v}">${v}</td>`;
     }).join("")+"</tr>").join("");

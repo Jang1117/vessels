@@ -254,7 +254,7 @@ const MANIFEST=[{"group": "Barge", "count": 12614, "files": ["Barge.json"]}, {"g
 const BASE=(function(){const href=location.href.replace(/[?#].*$/,"");return href.endsWith("/")?href:href.substring(0,href.lastIndexOf("/")+1);})();
 
 const CLR=["#3b82f6","#14b8a6","#f59e0b","#f97316","#a78bfa","#22c55e","#e11d48","#06b6d4","#84cc16","#8b5cf6","#f43f5e","#0ea5e9","#ec4899","#10b981"];
-const NUMERIC_COLS=new Set(["gross_tonnage","width","depth","length_overall","engine_power_hp","built_year","vessel_price"]);
+const NUMERIC_COLS=new Set(["gross_tonnage","width","depth","length_overall","engine_power_hp","vessel_price"]); // built_year는 쉼표 없이 표시
 const COLS=[
   {k:"vessel_name",l:"선박명"},{k:"vessel_type",l:"Vessel Type"},
   {k:"built_year",l:"건조연도"},{k:"registry_date",l:"등록일"},
@@ -363,10 +363,11 @@ function setProg(p,t){document.getElementById("prog-fill").style.width=p+"%";if(
 
 let selectedVTypes=new Set();
 function buildVtypeList(){
-  const types=[...new Set(curData.map(r=>r.vessel_type).filter(Boolean))].sort();
+  // 빈 vessel_type도 "(미상)"으로 포함
+  const rawTypes=[...new Set(curData.map(r=>r.vessel_type||"(미상)"))].sort();
   const box=document.getElementById("vtype-box");
   box.innerHTML="";
-  types.forEach(t=>{
+  rawTypes.forEach(t=>{
     const div=document.createElement("div"); div.className="vtype-item"; div.dataset.val=t;
     const cb=document.createElement("input"); cb.type="checkbox"; cb.value=t;
     cb.checked=selectedVTypes.has(t);
@@ -422,11 +423,11 @@ function applyFilters(){
 
   filtered=curData.filter(r=>{
     if(hasVtype){
-      const match=selectedVTypes.has(r.vessel_type||"");
+      const match=selectedVTypes.has(r.vessel_type||"(미상)");
       if(excl&&match)return false;
       if(!excl&&!match)return false;
     }
-    const yr=parseYear(r.built_year); if(!isNaN(yr)&&(yr<yrF||yr>yrT))return false;
+    const yr=parseYear(r.built_year); if(!isNaN(yr)&&yr>0&&(yr<yrF||yr>yrT))return false; // NaN(빈값)은 필터 통과
     const gt=+r.gross_tonnage; if(r.gross_tonnage&&gt&&(gt<gtMn||gt>gtMx))return false;
     const loa=+r.length_overall; if(r.length_overall&&loa&&(loa<loaMn||loa>loaMx))return false;
     const w=+r.width; if(r.width&&w&&(w<wMn||w>wMx))return false;
@@ -478,7 +479,10 @@ function renderMeas(){
 }
 
 function cntBy(rows,key,lim=15){
-  const c={};rows.forEach(r=>{const v=r[key]||"미상";c[v]=(c[v]||0)+1;});
+  const c={};rows.forEach(r=>{
+    const raw=r[key]; const v=(raw===null||raw===undefined||raw===""||raw==="nan")?"(미상)":String(raw);
+    c[v]=(c[v]||0)+1;
+  });
   return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,lim);
 }
 
@@ -530,7 +534,9 @@ function renderCharts(){
   const fsBase=curData.filter(r=>{
     if(selectedVTypes.size>0){
       const excl=document.getElementById("vtype-excl").checked;
-      const match=selectedVTypes.has(r.vessel_type||"");
+      const match=selectedVTypes.has(r.vessel_type||"(미상)");
+      if(excl&&match)return false;
+      if(!excl&&!match)return false;
       if(excl&&match)return false;
       if(!excl&&!match)return false;
     }
@@ -614,7 +620,7 @@ function renderTable(){
   } else {
     document.getElementById("tb").innerHTML=sl.map(row=>"<tr>"+COLS.map(col=>{
       let v=row[col.k];if(v===null||v===undefined||v==="")v="—";
-      if(col.k==="vessel_type")return`<td><span class="bl b1">${v}</span></td>`;
+      if(col.k==="vessel_type")return`<td><span class="bl b1">${v==="—"?"(미상)":v}</span></td>`;
       if(NUMERIC_COLS.has(col.k))return`<td class="tm">${v!=="—"?Number(v).toLocaleString():"—"}</td>`;
       return`<td title="${v}">${v}</td>`;
     }).join("")+"</tr>").join("");

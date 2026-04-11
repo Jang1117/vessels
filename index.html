@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>선박 데이터 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e17;--bg2:#111827;--bg3:#1a2233;--bg4:#243044;
+  --bdr:rgba(99,170,255,0.15);--bdr2:rgba(99,170,255,0.3);
+  --acc:#3b82f6;--acc2:#60a5fa;--teal:#14b8a6;--amb:#f59e0b;
+  --coral:#f97316;--grn:#22c55e;--purp:#a78bfa;--red:#f43f5e;
+  --tx:#f1f5f9;--tx2:#cbd5e1;--tx3:#94a3b8;
+  --font:"IBM Plex Sans KR",sans-serif;--mono:"IBM Plex Mono",monospace;
+}
+[data-theme="light"]{
+  --bg:#f0f4f8;--bg2:#ffffff;--bg3:#e8edf3;--bg4:#dde3eb;
+  --bdr:rgba(0,0,0,0.12);--bdr2:rgba(0,0,0,0.2);
+  --tx:#0f172a;--tx2:#1e293b;--tx3:#475569;
+}
+body{background:var(--bg);color:var(--tx);font-family:var(--font);font-size:14px;min-height:100vh;transition:background .2s,color .2s}
+.hdr{background:var(--bg2);border-bottom:1px solid var(--bdr);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;transition:background .2s}
+.logo{display:flex;align-items:center;gap:11px}
+.li{width:30px;height:30px;background:var(--acc);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.li svg{width:17px;height:17px;fill:white}
+.ht{font-size:15px;font-weight:500}
+.hs{font-size:11px;color:var(--tx2);font-family:var(--mono)}
+.hrx{display:flex;align-items:center;gap:8px}
+.hbadge{background:var(--bg3);border:1px solid var(--bdr);padding:4px 10px;border-radius:5px;font-size:11px;color:var(--tx2);font-family:var(--mono)}
+.theme-btn{background:var(--bg3);border:1px solid var(--bdr);color:var(--tx2);width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+.theme-btn:hover{border-color:var(--acc2);color:var(--acc2)}
+.theme-btn svg{width:16px;height:16px}
+.gnav{background:var(--bg2);border-bottom:1px solid var(--bdr);padding:0 24px;display:flex;overflow-x:auto;transition:background .2s}
+.gnav::-webkit-scrollbar{height:3px}.gnav::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+.gtab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--tx3);padding:11px 14px;font-size:12px;font-family:var(--font);cursor:pointer;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:5px}
+.gtab:hover{color:var(--tx2)}.gtab.active{color:var(--acc2);border-bottom-color:var(--acc2)}
+.gcnt{font-size:10px;font-family:var(--mono);background:var(--bg3);color:var(--tx2);padding:1px 6px;border-radius:9px}
+.main{padding:18px 24px}
+#prog{display:none;background:var(--bg2);border:1px solid var(--bdr);border-radius:8px;padding:12px 16px;margin-bottom:14px;align-items:center;gap:12px}
+.prog-txt{font-size:11px;color:var(--tx);font-family:var(--mono);white-space:nowrap;min-width:160px}
+.prog-track{flex:1;background:var(--bg3);border-radius:4px;height:4px;overflow:hidden}
+.prog-fill{background:var(--acc);height:100%;border-radius:4px;transition:width .25s;width:0%}
+.fpanel{background:var(--bg2);border:1px solid var(--bdr);border-radius:11px;margin-bottom:16px;overflow:hidden;transition:background .2s}
+.fhead{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;cursor:pointer;user-select:none}
+.fhead-left{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:500;color:var(--tx2)}
+.fhead-left svg{width:14px;height:14px;stroke:var(--tx3);fill:none;stroke-width:2}
+.fcount{font-size:11px;font-family:var(--mono);background:var(--acc);color:white;padding:1px 7px;border-radius:9px;display:none}
+.fcount.has{display:inline}
+.ftoggle{font-size:11px;color:var(--tx3)}
+.fbody{padding:14px 16px;border-top:1px solid var(--bdr);display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.fbody.collapsed{display:none}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fl{font-size:10px;color:var(--tx2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px}
+select,input[type=text],input[type=number]{background:var(--bg3);border:1px solid var(--bdr);color:var(--tx);padding:6px 9px;border-radius:6px;font-size:12px;font-family:var(--font);outline:none;width:100%;transition:border-color .15s}
+select:focus,input:focus{border-color:var(--acc2)}
+input::placeholder{color:var(--tx3)}
+.excl-row{display:flex;align-items:center;gap:6px;margin-top:5px}
+.excl-toggle{position:relative;width:34px;height:18px;cursor:pointer;flex-shrink:0}
+.excl-toggle input{opacity:0;width:0;height:0}
+.excl-slider{position:absolute;inset:0;background:var(--bg3);border:1px solid var(--bdr2);border-radius:9px;transition:.2s}
+.excl-slider::before{content:"";position:absolute;left:2px;top:50%;transform:translateY(-50%);width:12px;height:12px;background:var(--tx3);border-radius:50%;transition:.2s}
+input:checked+.excl-slider{background:rgba(244,63,94,.2);border-color:var(--red)}
+input:checked+.excl-slider::before{left:18px;background:var(--red)}
+.excl-label{font-size:11px;color:var(--tx2)}
+.range-row{display:flex;gap:6px;align-items:center}
+.range-row input{flex:1}
+.range-sep{font-size:11px;color:var(--tx3);flex-shrink:0}
+.faction{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:6px;border-top:1px solid var(--bdr)}
+.breset{background:transparent;border:1px solid var(--bdr2);color:var(--tx2);padding:5px 12px;border-radius:6px;font-size:12px;font-family:var(--font);cursor:pointer;transition:all .15s}
+.breset:hover{border-color:var(--red);color:var(--red)}
+.active-filters{font-size:11px;color:var(--tx2);font-family:var(--mono)}
+.vtype-box{background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;max-height:130px;overflow-y:auto;padding:4px}
+.vtype-box::-webkit-scrollbar{width:4px}.vtype-box::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+.vtype-item{display:flex;align-items:center;gap:6px;padding:3px 6px;border-radius:4px;cursor:pointer;font-size:12px;transition:background .1s}
+.vtype-item:hover{background:var(--bg4)}
+.vtype-item input[type=checkbox]{width:12px;height:12px;accent-color:var(--acc);flex-shrink:0}
+.vtype-search{margin-bottom:4px;font-size:11px}
+.srow{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:16px}
+.sc{background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:13px 15px;position:relative;overflow:hidden;transition:background .2s}
+.sc::after{content:"";position:absolute;top:0;left:0;right:0;height:2px}
+.sc.cb::after{background:var(--acc)}.sc.ct::after{background:var(--teal)}.sc.ca::after{background:var(--amb)}.sc.cg::after{background:var(--grn)}
+.sl{font-size:10px;color:var(--tx2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.sv{font-size:22px;font-weight:300;letter-spacing:-0.5px}
+.ss{font-size:11px;color:var(--tx2);margin-top:2px}
+.cgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+.cc{background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:15px;transition:background .2s}
+.ctitle{font-size:12px;font-weight:500;color:var(--tx);font-family:var(--mono);margin-bottom:11px}
+.cw{position:relative;width:100%;height:200px}
+.meas-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:15px;margin-bottom:16px;transition:background .2s}
+.meas-title{font-size:11px;font-weight:500;color:var(--tx2);font-family:var(--mono);margin-bottom:12px}
+.meas-grid{display:grid;gap:10px}
+.meas-item{background:var(--bg3);border-radius:8px;padding:10px 12px;text-align:center}
+.meas-label{font-size:10px;color:var(--tx2);font-family:var(--mono);text-transform:uppercase;margin-bottom:4px}
+.meas-val{font-size:16px;font-weight:300;font-family:var(--mono)}
+.meas-unit{font-size:10px;color:var(--tx2);margin-top:2px}
+.tc{background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;overflow:hidden;margin-bottom:18px;transition:background .2s}
+.thead2{padding:11px 15px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.tt{font-size:11px;font-weight:500;color:var(--tx2);font-family:var(--mono)}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--bg3);padding:8px 11px;text-align:left;font-size:10px;color:var(--tx2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--bdr);white-space:nowrap;cursor:pointer;user-select:none;transition:background .2s}
+thead th:hover{color:var(--acc2)}
+thead th.sort-asc::after{content:" ↑"}thead th.sort-desc::after{content:" ↓"}
+tbody tr{border-bottom:1px solid var(--bdr);transition:background .1s}
+tbody tr:hover{background:var(--bg3)}
+tbody tr:last-child{border-bottom:none}
+tbody td{padding:8px 11px;color:var(--tx);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.tm{font-family:var(--mono);font-size:11px;color:var(--tx)}
+.bl{display:inline-block;padding:1px 7px;border-radius:3px;font-size:10px;font-family:var(--mono)}
+.b1{background:rgba(59,130,246,.15);color:#60a5fa}
+.b3{background:rgba(245,158,11,.15);color:#f59e0b}
+.pgn{display:flex;align-items:center;gap:5px;padding:10px 15px;border-top:1px solid var(--bdr);justify-content:flex-end;flex-wrap:wrap}
+.pb{background:var(--bg3);border:1px solid var(--bdr);color:var(--tx2);min-width:28px;height:28px;padding:0 6px;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;transition:all .12s;font-family:var(--mono)}
+.pb:hover{border-color:var(--acc2);color:var(--acc2)}
+.pb.active{background:var(--acc);border-color:var(--acc);color:white}
+.pb:disabled{opacity:.3;cursor:not-allowed}
+.pi{font-size:11px;color:var(--tx2);font-family:var(--mono);margin:0 4px}
+@media(max-width:900px){.srow{grid-template-columns:repeat(2,1fr)}.cgrid{grid-template-columns:1fr}.meas-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.main{padding:12px 14px}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="logo">
+    <div class="li"><svg viewBox="0 0 24 24"><path d="M3 17l4-8 4 4 3-6 4 10H3z"/></svg></div>
+    <div><div class="ht">선박 데이터 대시보드</div><div class="hs">vessels.xlsx · 109,444 rows</div></div>
+  </div>
+  <div class="hrx">
+    <span class="hbadge" id="hbadge">—</span>
+    <button class="theme-btn" title="테마 전환" onclick="toggleTheme()">
+      <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<nav class="gnav" id="gnav">
+  <button class="gtab" data-grp="__all__">전체 <span class="gcnt">109,444</span></button>
+</nav>
+
+<div class="main">
+  <div id="prog" style="display:none">
+    <span class="prog-txt" id="prog-txt">로딩 중...</span>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  </div>
+
+  <div class="fpanel">
+    <div class="fhead" onclick="toggleFilters()">
+      <div class="fhead-left">
+        <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        필터 <span class="fcount" id="fcount">0</span>
+      </div>
+      <span class="ftoggle" id="ftoggle">▼ 펼치기</span>
+    </div>
+    <div class="fbody collapsed" id="fbody">
+      <div class="fg" style="grid-column:span 2">
+        <div class="fl">Vessel Type (체크박스 선택 또는 차트 클릭)</div>
+        <input class="vtype-search" type="text" id="vtype-search" placeholder="종류 검색...">
+        <div class="vtype-box" id="vtype-box"></div>
+        <div class="excl-row">
+          <label class="excl-toggle"><input type="checkbox" id="vtype-excl"><span class="excl-slider"></span></label>
+          <span class="excl-label">제외 모드 — 선택 항목을 제외하고 보기</span>
+        </div>
+      </div>
+      <div class="fg">
+        <div class="fl">건조 연도</div>
+        <div class="range-row">
+          <input type="number" id="f-yr-from" placeholder="From" min="1900" max="2030">
+          <span class="range-sep">~</span>
+          <input type="number" id="f-yr-to" placeholder="To" min="1900" max="2030">
+        </div>
+      </div>
+      <div class="fg">
+        <div class="fl">Gross Tonnage</div>
+        <div class="range-row">
+          <input type="number" id="f-gt-min" placeholder="Min">
+          <span class="range-sep">~</span>
+          <input type="number" id="f-gt-max" placeholder="Max">
+        </div>
+      </div>
+      <div class="fg">
+        <div class="fl">LOA (m)</div>
+        <div class="range-row">
+          <input type="number" id="f-loa-min" placeholder="Min">
+          <span class="range-sep">~</span>
+          <input type="number" id="f-loa-max" placeholder="Max">
+        </div>
+      </div>
+      <div class="fg">
+        <div class="fl">Width (m)</div>
+        <div class="range-row">
+          <input type="number" id="f-w-min" placeholder="Min">
+          <span class="range-sep">~</span>
+          <input type="number" id="f-w-max" placeholder="Max">
+        </div>
+      </div>
+      <div class="fg">
+        <div class="fl">Depth (m)</div>
+        <div class="range-row">
+          <input type="number" id="f-d-min" placeholder="Min">
+          <span class="range-sep">~</span>
+          <input type="number" id="f-d-max" placeholder="Max">
+        </div>
+      </div>
+      <div class="fg">
+        <div class="fl">선박명</div>
+        <input type="text" id="f-q" placeholder="선박명 검색...">
+      </div>
+      <div class="faction">
+        <button class="breset" id="btn-reset">필터 초기화</button>
+        <span class="active-filters" id="active-filters"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="srow">
+    <div class="sc cb"><div class="sl">선박 수</div><div class="sv" id="s-cnt">—</div><div class="ss" id="s-cnt-s"></div></div>
+    <div class="sc ct"><div class="sl">Vessel Type</div><div class="sv" id="s-typ">—</div><div class="ss">고유 종류 수</div></div>
+    <div class="sc ca"><div class="sl">평균 GT</div><div class="sv" id="s-ton">—</div><div class="ss">gross_tonnage avg</div></div>
+    <div class="sc cg"><div class="sl">평균 건조연도</div><div class="sv" id="s-yr">—</div><div class="ss" id="s-yr-s"></div></div>
+  </div>
+
+  <div class="meas-card">
+    <div class="meas-title">치수 요약 (필터 결과 기준 평균값, 0 제외)</div>
+    <div class="meas-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="meas-item"><div class="meas-label">Gross Tonnage</div><div class="meas-val" id="m-gt">—</div><div class="meas-unit">avg</div></div>
+      <div class="meas-item"><div class="meas-label">LOA</div><div class="meas-val" id="m-loa">—</div><div class="meas-unit">m avg</div></div>
+      <div class="meas-item"><div class="meas-label">Width</div><div class="meas-val" id="m-wid">—</div><div class="meas-unit">m avg</div></div>
+      <div class="meas-item"><div class="meas-label">Depth</div><div class="meas-val" id="m-dep">—</div><div class="meas-unit">m avg</div></div>
+    </div>
+  </div>
+
+  <div class="cgrid">
+    <div class="cc"><div class="ctitle">건조 연도별 추이</div><div class="cw" id="cw-year" style="height:300px"><canvas id="c-year" role="img" aria-label="건조 연도별 선박 수"></canvas></div></div>
+    <div class="cc"><div class="ctitle">Vessel Type TOP 15 <span style="font-size:10px;color:var(--tx3);font-weight:400">(클릭 필터)</span></div><div class="cw" style="height:300px"><canvas id="c-vtype" role="img" aria-label="vessel type 막대"></canvas></div></div>
+    <div class="cc" style="display:none"><div class="ctitle">엔진 타입 분포</div><div class="cw"><canvas id="c-hull" role="img" aria-label="엔진 타입 도넛"></canvas></div></div>
+    <div class="cc" style="display:none"><div class="ctitle">엔진명 TOP 12</div><div class="cw" style="height:300px"><canvas id="c-cat" role="img" aria-label="엔진명 막대"></canvas></div></div>
+    <div class="cc"><div class="ctitle" data-chart="c-port">국적(Flag State) TOP 12</div><div class="cw" style="height:260px"><canvas id="c-port" role="img" aria-label="국적 상위"></canvas></div></div>
+    <div class="cc"><div class="ctitle">Gross Tonnage 분포</div><div class="cw"><canvas id="c-ton" role="img" aria-label="톤수 분포"></canvas></div></div>
+  </div>
+
+  <div class="tc">
+    <div class="thead2"><span class="tt">선박 목록 (헤더 클릭 시 정렬)</span><span class="tt" id="tbl-n">—</span></div>
+    <div class="tw"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+    <div class="pgn" id="pgn"></div>
+  </div>
+</div>
+
+<script>
+const MANIFEST=[{"group": "Barge", "count": 12614, "files": ["Barge.json"]}, {"group": "Oil / Chemical", "count": 2396, "files": ["Oil___Chemical.json"]}, {"group": "Boat", "count": 66302, "files": ["Boat.json"]}, {"group": "Cargo", "count": 21929, "files": ["Cargo.json"]}, {"group": "Ferry", "count": 4694, "files": ["Ferry.json"]}, {"group": "Gas", "count": 114, "files": ["Gas.json"]}, {"group": "Plant", "count": 28, "files": ["Plant.json"]}, {"group": "기타", "count": 1367, "files": ["기타.json"]}];
+const BASE=(function(){const href=location.href.replace(/[?#].*$/,"");return href.endsWith("/")?href:href.substring(0,href.lastIndexOf("/")+1);})();
+
+const CLR=["#3b82f6","#14b8a6","#f59e0b","#f97316","#a78bfa","#22c55e","#e11d48","#06b6d4","#84cc16","#8b5cf6","#f43f5e","#0ea5e9","#ec4899","#10b981"];
+const NUMERIC_COLS=new Set(["gross_tonnage","width","depth","length_overall","engine_power_hp","built_year","vessel_price"]);
+const COLS=[
+  {k:"vessel_name",l:"선박명"},{k:"vessel_type",l:"Vessel Type"},
+  {k:"built_year",l:"건조연도"},{k:"registry_date",l:"등록일"},
+  {k:"vessel_price",l:"선가"},{k:"owner",l:"소유자"},
+  {k:"gross_tonnage",l:"GT"},{k:"width",l:"Width(m)"},
+  {k:"depth",l:"Depth(m)"},{k:"length_overall",l:"LOA(m)"},
+  {k:"flag_state",l:"국적"},{k:"engine_power_hp",l:"HP"},
+  {k:"engine_name",l:"엔진명"},{k:"engine_type",l:"엔진타입"},
+];
+
+let loaded={},curData=[],filtered=[],curGrp="__all__",charts={},page=1,sortCol=null,sortDir=1;
+let excludedFlags=new Set();
+const PG=100;
+let isDark=false;
+
+function toggleTheme(){
+  isDark=!isDark;
+  document.documentElement.setAttribute("data-theme",isDark?"dark":"light");
+  document.getElementById("icon-sun").style.display=isDark?"none":"block";
+  document.getElementById("icon-moon").style.display=isDark?"block":"none";
+  const tc=isDark?"#cbd5e1":"#1e293b", gc=isDark?"rgba(255,255,255,.08)":"rgba(0,0,0,.09)";
+  Object.values(charts).forEach(c=>{
+    ["x","y"].forEach(ax=>{
+      if(c.options.scales?.[ax]){
+        c.options.scales[ax].ticks&&(c.options.scales[ax].ticks.color=tc);
+        c.options.scales[ax].grid&&(c.options.scales[ax].grid.color=gc);
+      }
+    });
+    if(c.options.plugins?.legend?.labels) c.options.plugins.legend.labels.color=isDark?"#cbd5e1":"#1e293b";
+    c.update();
+  });
+}
+
+let filtersOpen=false;
+function toggleFilters(){
+  filtersOpen=!filtersOpen;
+  document.getElementById("fbody").classList.toggle("collapsed",!filtersOpen);
+  document.getElementById("ftoggle").textContent=filtersOpen?"▲ 접기":"▼ 펼치기";
+}
+
+(function buildTabs(){
+  const nav=document.getElementById("gnav");
+  MANIFEST.forEach(g=>{
+    const btn=document.createElement("button");
+    btn.className="gtab"; btn.dataset.grp=g.group;
+    btn.onclick=()=>selectGroup(g.group);
+    btn.innerHTML=g.group+' <span class="gcnt">'+g.count.toLocaleString()+'</span>';
+    nav.appendChild(btn);
+  });
+  document.querySelector('.gtab[data-grp="__all__"]').onclick=()=>{
+    curGrp=null; selectGroup("__all__");
+  };
+})();
+
+async function selectGroup(grp){
+  if(curGrp===grp)return;
+  curGrp=grp;
+  document.querySelectorAll(".gtab").forEach(b=>b.classList.toggle("active",b.dataset.grp===grp));
+  resetFilters(true);
+  await loadGroup(grp);
+}
+
+async function loadGroup(grp){
+  const seen=new Set();
+  let files=[];
+  if(grp==="__all__"){
+    MANIFEST.forEach(g=>g.files.forEach(f=>{
+      if(!seen.has(f)){seen.add(f);files.push({label:g.group,file:f});}
+    }));
+  } else {
+    const m=MANIFEST.find(x=>x.group===grp);
+    if(!m)return;
+    m.files.forEach(f=>{if(!seen.has(f)){seen.add(f);files.push({label:grp,file:f});}});
+  }
+  const toFetch=files.filter(x=>!loaded[x.file]);
+  if(!toFetch.length){
+    curData=files.flatMap(x=>loaded[x.file]||[]);
+    finishLoad();return;
+  }
+  showProg(true,"0/"+toFetch.length+" 파일 로드 중...");
+  let done=0;
+  await Promise.all(toFetch.map(async({label,file})=>{
+    const r=await fetch(BASE+file);
+    if(!r.ok) throw new Error("404: "+BASE+file);
+    const p=await r.json();
+    loaded[file]=Array.isArray(p.rows)?p.rows:[];
+    done++;
+    setProg(Math.round(done/toFetch.length*100),done+"/"+toFetch.length+" 완료 ("+label+")");
+  }));
+  showProg(false);
+  curData=files.flatMap(x=>loaded[x.file]||[]);
+  finishLoad();
+}
+
+function finishLoad(){
+  document.getElementById("hbadge").textContent=curData.length.toLocaleString()+" rows";
+  buildVtypeList(); initSelects();
+  // 건조연도 기본값: 현재 연도 - 50 (비어있을 때만 설정)
+  const yrFromEl=document.getElementById("f-yr-from");
+  if(!yrFromEl.value) yrFromEl.value=new Date().getFullYear()-50;
+  applyFilters();
+}
+
+function showProg(v,t){const el=document.getElementById("prog");el.style.display=v?"flex":"none";if(t)document.getElementById("prog-txt").textContent=t;}
+function setProg(p,t){document.getElementById("prog-fill").style.width=p+"%";if(t)document.getElementById("prog-txt").textContent=t;}
+
+let selectedVTypes=new Set();
+function buildVtypeList(){
+  const types=[...new Set(curData.map(r=>r.vessel_type).filter(Boolean))].sort();
+  const box=document.getElementById("vtype-box");
+  box.innerHTML="";
+  types.forEach(t=>{
+    const div=document.createElement("div"); div.className="vtype-item"; div.dataset.val=t;
+    const cb=document.createElement("input"); cb.type="checkbox"; cb.value=t;
+    cb.checked=selectedVTypes.has(t);
+    cb.onchange=()=>{if(cb.checked)selectedVTypes.add(t);else selectedVTypes.delete(t);applyFilters();};
+    const span=document.createElement("span"); span.textContent=t;
+    div.appendChild(cb); div.appendChild(span); box.appendChild(div);
+  });
+}
+document.getElementById("vtype-search").oninput=function(){
+  const q=this.value.toLowerCase();
+  document.querySelectorAll(".vtype-item").forEach(el=>{
+    el.style.display=el.dataset.val.toLowerCase().includes(q)?"":"none";
+  });
+};
+document.getElementById("vtype-excl").onchange=applyFilters;
+
+function getUniq(key){const s=new Set();curData.forEach(r=>{if(r[key])s.add(String(r[key]));});return[...s].sort();}
+function popSel(id,items){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">전체</option>';items.forEach(v=>el.innerHTML+=`<option value="${v}">${v}</option>`);}
+function initSelects(){}
+
+["f-yr-from","f-yr-to","f-gt-min","f-gt-max","f-w-min","f-w-max","f-d-min","f-d-max","f-loa-min","f-loa-max"].forEach(id=>document.getElementById(id).addEventListener("input",debounce(applyFilters,280)));
+document.getElementById("f-q").addEventListener("input",debounce(applyFilters,180));
+document.getElementById("btn-reset").addEventListener("click",()=>resetFilters(false));
+
+function resetFilters(silent){
+  selectedVTypes.clear();
+  excludedFlags.clear();
+  document.querySelectorAll(".vtype-item input").forEach(cb=>cb.checked=false);
+  document.getElementById("vtype-excl").checked=false;
+  ["f-yr-to","f-gt-min","f-gt-max","f-w-min","f-w-max","f-d-min","f-d-max","f-loa-min","f-loa-max","f-q"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("f-yr-from").value=new Date().getFullYear()-50;
+  if(!silent)applyFilters();
+}
+
+function parseYear(v){
+  if(!v||v==="")return NaN;
+  const s=String(v).trim();
+  const n=+s;
+  if(!isNaN(n)&&n>1800&&n<=2030)return n;
+  const m=s.match(/^(\d{4})/);
+  return m?+m[1]:NaN;
+}
+
+function applyFilters(){
+  const excl=document.getElementById("vtype-excl").checked;
+  const yrF=+document.getElementById("f-yr-from").value||0, yrT=+document.getElementById("f-yr-to").value||9999;
+  const gtMn=+document.getElementById("f-gt-min").value||0, gtMx=+document.getElementById("f-gt-max").value||Infinity;
+  const loaMn=+document.getElementById("f-loa-min").value||0, loaMx=+document.getElementById("f-loa-max").value||Infinity;
+  const wMn=+document.getElementById("f-w-min").value||0, wMx=+document.getElementById("f-w-max").value||Infinity;
+  const dMn=+document.getElementById("f-d-min").value||0, dMx=+document.getElementById("f-d-max").value||Infinity;
+  const q=document.getElementById("f-q").value.toLowerCase().trim();
+  const hasVtype=selectedVTypes.size>0;
+
+  filtered=curData.filter(r=>{
+    if(hasVtype){
+      const match=selectedVTypes.has(r.vessel_type||"");
+      if(excl&&match)return false;
+      if(!excl&&!match)return false;
+    }
+    const yr=parseYear(r.built_year); if(!isNaN(yr)&&(yr<yrF||yr>yrT))return false;
+    const gt=+r.gross_tonnage; if(r.gross_tonnage&&gt&&(gt<gtMn||gt>gtMx))return false;
+    const loa=+r.length_overall; if(r.length_overall&&loa&&(loa<loaMn||loa>loaMx))return false;
+    const w=+r.width; if(r.width&&w&&(w<wMn||w>wMx))return false;
+    const d=+r.depth; if(r.depth&&d&&(d<dMn||d>dMx))return false;
+    if(q&&!String(r.vessel_name||"").toLowerCase().includes(q))return false;
+    return true;
+  });
+
+  let ac=0;
+  if(hasVtype)ac++;
+  if(yrF||yrT<9999)ac++; if(gtMn||gtMx<Infinity)ac++;
+  if(loaMn||loaMx<Infinity)ac++; if(wMn||wMx<Infinity)ac++; if(dMn||dMx<Infinity)ac++; if(q)ac++;
+  const fcEl=document.getElementById("fcount");
+  fcEl.textContent=ac; fcEl.classList.toggle("has",ac>0);
+  document.getElementById("active-filters").textContent=ac>0?ac+"개 필터 적용 중 ("+filtered.length.toLocaleString()+"건 해당)":"";
+  page=1; sortCol=null; sortDir=1;
+  renderAll();
+}
+
+function renderAll(){renderStats();renderMeas();renderCharts();renderTable();}
+
+function avg(arr){return arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:null;}
+function fmtAvg(v,dec=1){if(v===null)return"—";return v>=1000?(v/1000).toFixed(1)+"k":v.toFixed(dec);}
+
+function renderStats(){
+  const rows=filtered;
+  document.getElementById("s-cnt").textContent=rows.length.toLocaleString();
+  document.getElementById("s-cnt-s").textContent="전체 "+curData.length.toLocaleString()+"척 중";
+  document.getElementById("s-typ").textContent=new Set(rows.map(r=>r.vessel_type).filter(Boolean)).size;
+  const tons=rows.map(r=>+r.gross_tonnage).filter(v=>v>0&&!isNaN(v));
+  document.getElementById("s-ton").textContent=fmtAvg(avg(tons));
+  const yrs=rows.map(r=>parseYear(r.built_year)).filter(v=>!isNaN(v)&&v>1800&&v<=2030);
+  const yrAvg=yrs.length?Math.round(yrs.reduce((a,b)=>a+b,0)/yrs.length):null;
+  document.getElementById("s-yr").textContent=yrAvg!==null?yrAvg+"년":"—";
+  document.getElementById("s-yr-s").textContent=yrs.length?Math.min(...yrs)+"~"+Math.max(...yrs)+" (평균)":"";
+}
+
+function renderMeas(){
+  const rows=filtered;
+  const posNum=(key)=>rows.map(r=>parseFloat(r[key])).filter(v=>!isNaN(v)&&v>0);
+  const gt=posNum("gross_tonnage");
+  const wd=posNum("width");
+  const dp=posNum("depth");
+  const lo=posNum("length_overall");
+  document.getElementById("m-gt").textContent=gt.length?fmtAvg(avg(gt)):"—";
+  document.getElementById("m-wid").textContent=wd.length?avg(wd).toFixed(1):"—";
+  document.getElementById("m-dep").textContent=dp.length?avg(dp).toFixed(1):"—";
+  document.getElementById("m-loa").textContent=lo.length?avg(lo).toFixed(1):"—";
+}
+
+function cntBy(rows,key,lim=15){
+  const c={};rows.forEach(r=>{const v=r[key]||"미상";c[v]=(c[v]||0)+1;});
+  return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,lim);
+}
+
+function tickColor(){return isDark?"#cbd5e1":"#1e293b";}
+function gridColor(){return isDark?"rgba(255,255,255,.08)":"rgba(0,0,0,.09)";}
+function legColor(){return isDark?"#cbd5e1":"#1e293b";}
+
+function renderCharts(){
+  // 건조 연도
+  const yc={};
+  filtered.forEach(r=>{const y=parseYear(r.built_year);if(!isNaN(y)&&y>1900&&y<=2030)yc[y]=(yc[y]||0)+1;});
+  const yks=Object.keys(yc).sort();
+  dst("c-year");
+  charts["c-year"]=new Chart(document.getElementById("c-year"),{type:"line",
+    data:{labels:yks,datasets:[{data:yks.map(y=>yc[y]),borderColor:"#14b8a6",backgroundColor:"rgba(20,184,166,.08)",borderWidth:2,pointRadius:yks.length>60?0:3,pointHoverRadius:6,pointHoverBackgroundColor:"#14b8a6",fill:true,tension:.35}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:"index",intersect:false,callbacks:{title:i=>i[0].label+"년",label:i=>i.parsed.y.toLocaleString()+"척"}}},
+      scales:{x:{ticks:{color:tickColor(),font:{size:10},autoSkip:true,maxTicksLimit:14},grid:{display:false}},y:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false}}}}});
+
+  // Vessel Type - 클릭으로 필터
+  const vt=cntBy(filtered,"vessel_type",15);
+  dst("c-vtype");
+  const vh=Math.max(vt.length*28+60,180);
+  document.getElementById("c-vtype").parentElement.style.height=vh+"px";
+  document.getElementById("cw-year").style.height=vh+"px";
+  charts["c-vtype"]=new Chart(document.getElementById("c-vtype"),{type:"bar",
+    data:{labels:vt.map(x=>x[0]),datasets:[{data:vt.map(x=>x[1]),
+      backgroundColor:vt.map((x,i)=>selectedVTypes.has(x[0])?CLR[i%CLR.length]:CLR[i%CLR.length]+"bb"),
+      borderColor:vt.map((x,i)=>CLR[i%CLR.length]),
+      borderWidth:vt.map(x=>selectedVTypes.has(x[0])?2:1),borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:"y",
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.parsed.x.toLocaleString()+"척 (클릭하여 필터)"}}},
+      onClick:(e,els)=>{
+        if(!els.length)return;
+        const label=vt[els[0].index][0];
+        if(selectedVTypes.has(label))selectedVTypes.delete(label);
+        else selectedVTypes.add(label);
+        document.querySelectorAll(".vtype-item input").forEach(cb=>{cb.checked=selectedVTypes.has(cb.value);});
+        applyFilters();
+      },
+      scales:{x:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false}},y:{ticks:{color:legColor(),font:{size:10}},grid:{display:false}}}}});
+
+  // 엔진 타입 (숨김)
+  dst("c-hull");
+  // 엔진명 (숨김)
+  dst("c-cat");
+
+  // Flag State - 클릭으로 숨기기
+  const fsBase=curData.filter(r=>{
+    if(selectedVTypes.size>0){
+      const excl=document.getElementById("vtype-excl").checked;
+      const match=selectedVTypes.has(r.vessel_type||"");
+      if(excl&&match)return false;
+      if(!excl&&!match)return false;
+    }
+    return true;
+  });
+  const fsAll=cntBy(fsBase,"flag_state",20);
+  const fsTop=fsAll.filter(x=>!excludedFlags.has(x[0])).slice(0,12);
+  dst("c-port");
+  const ph=Math.max(fsTop.length*28+60,180);
+  document.getElementById("c-port").parentElement.style.height=ph+"px";
+  const portTitleEl=document.querySelector('.ctitle[data-chart="c-port"]');
+  if(portTitleEl)portTitleEl.textContent="국적(Flag State)"+(excludedFlags.size>0?" ("+excludedFlags.size+"개 숨김)":"")+" TOP 12";
+  charts["c-port"]=new Chart(document.getElementById("c-port"),{type:"bar",
+    data:{labels:fsTop.map(x=>x[0]),datasets:[{data:fsTop.map(x=>x[1]),backgroundColor:"#a78bfabb",borderColor:"#a78bfa",borderWidth:1,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:"y",
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.parsed.x.toLocaleString()+"척 (클릭하여 숨기기)"}}},
+      onClick:(e,els)=>{
+        if(!els.length)return;
+        const label=fsTop[els[0].index][0];
+        excludedFlags.has(label)?excludedFlags.delete(label):excludedFlags.add(label);
+        renderCharts();
+      },
+      scales:{x:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false}},y:{ticks:{color:legColor(),font:{size:10}},grid:{display:false}}}}});
+  renderFlagTags(fsAll);
+
+  // GT 분포
+  dst("c-ton");
+  const gtVals=filtered.map(r=>+r.gross_tonnage).filter(v=>v>0&&!isNaN(v));
+  const bins=[0,100,500,1000,5000,10000,50000,100000,Infinity];
+  const binLabels=["<100","100-500","500-1k","1k-5k","5k-10k","10k-50k","50k-100k","100k+"];
+  const binCounts=new Array(binLabels.length).fill(0);
+  gtVals.forEach(v=>{for(let i=0;i<bins.length-1;i++){if(v>=bins[i]&&v<bins[i+1]){binCounts[i]++;break;}}});
+  charts["c-ton"]=new Chart(document.getElementById("c-ton"),{type:"bar",
+    data:{labels:binLabels,datasets:[{data:binCounts,backgroundColor:"#3b82f6bb",borderColor:"#3b82f6",borderWidth:1,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.parsed.y.toLocaleString()+"척"}}},
+      scales:{x:{ticks:{color:tickColor(),font:{size:10}},grid:{display:false}},y:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false}}}}});
+}
+
+function dst(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function renderFlagTags(fsAll){
+  let el=document.getElementById("flag-tags");
+  if(!el){
+    el=document.createElement("div");
+    el.id="flag-tags";
+    el.style.cssText="display:flex;flex-wrap:wrap;gap:5px;padding:8px 0 4px;";
+    const portCard=document.getElementById("c-port").closest(".cc");
+    portCard.appendChild(el);
+  }
+  el.innerHTML="";
+  if(excludedFlags.size===0){
+    el.innerHTML='<span style="font-size:11px;color:var(--tx3)">클릭으로 국적 숨기기/표시</span>';
+    return;
+  }
+  excludedFlags.forEach(flag=>{
+    const tag=document.createElement("span");
+    tag.style.cssText="font-size:11px;font-family:var(--mono);background:rgba(239,68,68,.15);color:#f87171;padding:2px 8px;border-radius:12px;cursor:pointer;border:1px solid rgba(239,68,68,.3)";
+    tag.textContent="✕ "+flag;
+    tag.onclick=()=>{excludedFlags.delete(flag);renderCharts();};
+    el.appendChild(tag);
+  });
+}
+
+function renderTable(){
+  let rows=[...filtered];
+  if(sortCol){
+    rows.sort((a,b)=>{
+      let va=a[sortCol]??"",vb=b[sortCol]??"";
+      if(NUMERIC_COLS.has(sortCol)){va=+va||0;vb=+vb||0;return(va-vb)*sortDir;}
+      return String(va).localeCompare(String(vb),"ko")*sortDir;
+    });
+  }
+  const tot=rows.length,tp=Math.max(1,Math.ceil(tot/PG));
+  page=Math.min(page,tp);
+  const sl=rows.slice((page-1)*PG,page*PG);
+  document.getElementById("tbl-n").textContent=tot.toLocaleString()+" 건";
+  document.getElementById("th").innerHTML="<tr>"+COLS.map(c=>`<th class="${sortCol===c.k?(sortDir===1?"sort-asc":"sort-desc"):""}" onclick="setSort('${c.k}')">${c.l}</th>`).join("")+"</tr>";
+  if(!sl.length){
+    document.getElementById("tb").innerHTML=`<tr><td colspan="${COLS.length}" style="text-align:center;padding:28px;color:var(--tx3)">검색 결과 없음</td></tr>`;
+  } else {
+    document.getElementById("tb").innerHTML=sl.map(row=>"<tr>"+COLS.map(col=>{
+      let v=row[col.k];if(v===null||v===undefined||v==="")v="—";
+      if(col.k==="vessel_type")return`<td><span class="bl b1">${v}</span></td>`;
+      if(NUMERIC_COLS.has(col.k))return`<td class="tm">${v!=="—"?Number(v).toLocaleString():"—"}</td>`;
+      return`<td title="${v}">${v}</td>`;
+    }).join("")+"</tr>").join("");
+  }
+  renderPgn(page,tp,tot);
+}
+
+window.setSort=function(col){if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=1;}renderTable();};
+
+function renderPgn(cur,tot,rows){
+  const pg=document.getElementById("pgn");
+  if(tot<=1){pg.innerHTML="";return;}
+  let h=`<button class="pb" onclick="gp(${cur-1})" ${cur===1?"disabled":""}>&#8592;</button>`;
+  const rng=[];for(let i=Math.max(1,cur-2);i<=Math.min(tot,cur+2);i++)rng.push(i);
+  if(rng[0]>1){h+=`<button class="pb" onclick="gp(1)">1</button>`;if(rng[0]>2)h+='<span class="pi">…</span>';}
+  rng.forEach(p=>h+=`<button class="pb ${p===cur?"active":""}" onclick="gp(${p})">${p}</button>`);
+  if(rng[rng.length-1]<tot){if(rng[rng.length-1]<tot-1)h+='<span class="pi">…</span>';h+=`<button class="pb" onclick="gp(${tot})">${tot}</button>`;}
+  h+=`<button class="pb" onclick="gp(${cur+1})" ${cur===tot?"disabled":""}>&#8594;</button>`;
+  h+=`<span class="pi">${((cur-1)*PG+1).toLocaleString()}–${Math.min(cur*PG,rows).toLocaleString()} / ${rows.toLocaleString()}</span>`;
+  pg.innerHTML=h;
+}
+window.gp=function(p){const t=Math.ceil(filtered.length/PG);if(p<1||p>t)return;page=p;renderTable();document.querySelector(".tc").scrollIntoView({behavior:"smooth",block:"start"});};
+function debounce(fn,d){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),d);};}
+if(MANIFEST.length>0){curGrp=null;selectGroup("__all__");}
+
+</script>
+</body>
+</html>

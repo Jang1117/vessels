@@ -153,9 +153,9 @@ tbody td{padding:8px 11px;color:var(--tx);white-space:nowrap;max-width:160px;ove
         <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
         필터 <span class="fcount" id="fcount">0</span>
       </div>
-      <span class="ftoggle" id="ftoggle">▲ 접기</span>
+      <span class="ftoggle" id="ftoggle">▼ 펼치기</span>
     </div>
-    <div class="fbody" id="fbody">
+    <div class="fbody collapsed" id="fbody">
       <div class="fg" style="grid-column:span 2">
         <div class="fl">Vessel Type (체크박스 선택 또는 차트 클릭)</div>
         <input class="vtype-search" type="text" id="vtype-search" placeholder="종류 검색...">
@@ -227,9 +227,9 @@ tbody td{padding:8px 11px;color:var(--tx);white-space:nowrap;max-width:160px;ove
     <div class="meas-title">치수 요약 (필터 결과 기준 평균값, 0 제외)</div>
     <div class="meas-grid" style="grid-template-columns:repeat(4,1fr)">
       <div class="meas-item"><div class="meas-label">Gross Tonnage</div><div class="meas-val" id="m-gt">—</div><div class="meas-unit">avg</div></div>
+      <div class="meas-item"><div class="meas-label">LOA</div><div class="meas-val" id="m-loa">—</div><div class="meas-unit">m avg</div></div>
       <div class="meas-item"><div class="meas-label">Width</div><div class="meas-val" id="m-wid">—</div><div class="meas-unit">m avg</div></div>
       <div class="meas-item"><div class="meas-label">Depth</div><div class="meas-val" id="m-dep">—</div><div class="meas-unit">m avg</div></div>
-      <div class="meas-item"><div class="meas-label">LOA</div><div class="meas-val" id="m-loa">—</div><div class="meas-unit">m avg</div></div>
     </div>
   </div>
 
@@ -288,7 +288,7 @@ function toggleTheme(){
   });
 }
 
-let filtersOpen=true;
+let filtersOpen=false;
 function toggleFilters(){
   filtersOpen=!filtersOpen;
   document.getElementById("fbody").classList.toggle("collapsed",!filtersOpen);
@@ -351,7 +351,11 @@ async function loadGroup(grp){
 
 function finishLoad(){
   document.getElementById("hbadge").textContent=curData.length.toLocaleString()+" rows";
-  buildVtypeList(); initSelects(); applyFilters();
+  buildVtypeList(); initSelects();
+  // 건조연도 기본값: 현재 연도 - 50 (비어있을 때만 설정)
+  const yrFromEl=document.getElementById("f-yr-from");
+  if(!yrFromEl.value) yrFromEl.value=new Date().getFullYear()-50;
+  applyFilters();
 }
 
 function showProg(v,t){const el=document.getElementById("prog");el.style.display=v?"flex":"none";if(t)document.getElementById("prog-txt").textContent=t;}
@@ -392,7 +396,8 @@ function resetFilters(silent){
   excludedFlags.clear();
   document.querySelectorAll(".vtype-item input").forEach(cb=>cb.checked=false);
   document.getElementById("vtype-excl").checked=false;
-  ["f-yr-from","f-yr-to","f-gt-min","f-gt-max","f-w-min","f-w-max","f-d-min","f-d-max","f-loa-min","f-loa-max","f-q"].forEach(id=>document.getElementById(id).value="");
+  ["f-yr-to","f-gt-min","f-gt-max","f-w-min","f-w-max","f-d-min","f-d-max","f-loa-min","f-loa-max","f-q"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("f-yr-from").value=new Date().getFullYear()-50;
   if(!silent)applyFilters();
 }
 
@@ -501,8 +506,8 @@ function renderCharts(){
   document.getElementById("cw-year").style.height=vh+"px";
   charts["c-vtype"]=new Chart(document.getElementById("c-vtype"),{type:"bar",
     data:{labels:vt.map(x=>x[0]),datasets:[{data:vt.map(x=>x[1]),
-      backgroundColor:vt.map(x=>selectedVTypes.has(x[0])?"#3b82f6":"#3b82f6bb"),
-      borderColor:vt.map(x=>selectedVTypes.has(x[0])?"#3b82f6":"#3b82f688"),
+      backgroundColor:vt.map((x,i)=>selectedVTypes.has(x[0])?CLR[i%CLR.length]:CLR[i%CLR.length]+"bb"),
+      borderColor:vt.map((x,i)=>CLR[i%CLR.length]),
       borderWidth:vt.map(x=>selectedVTypes.has(x[0])?2:1),borderRadius:3}]},
     options:{responsive:true,maintainAspectRatio:false,indexAxis:"y",
       plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.parsed.x.toLocaleString()+"척 (클릭하여 필터)"}}},

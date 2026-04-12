@@ -373,6 +373,7 @@ function buildVtypeList(){
     cb.checked=selectedVTypes.has(t);
     cb.onchange=()=>{if(cb.checked)selectedVTypes.add(t);else selectedVTypes.delete(t);applyFilters();};
     const span=document.createElement("span"); span.textContent=t;
+    div.onclick=(e)=>{if(e.target===cb)return; cb.checked=!cb.checked; cb.onchange();};
     div.appendChild(cb); div.appendChild(span); box.appendChild(div);
   });
 }

@@ -1,0 +1,63 @@
+{
+  "source": "vessels.xlsx",
+  "total_rows": 114591,
+  "groups": [
+    {
+      "group": "Barge",
+      "count": 12708,
+      "files": [
+        "Barge.json"
+      ]
+    },
+    {
+      "group": "Oil / Chemical",
+      "count": 2420,
+      "files": [
+        "Oil___Chemical.json"
+      ]
+    },
+    {
+      "group": "Boat",
+      "count": 70050,
+      "files": [
+        "Boat_0.json",
+        "Boat_1.json"
+      ]
+    },
+    {
+      "group": "Cargo",
+      "count": 23080,
+      "files": [
+        "Cargo.json"
+      ]
+    },
+    {
+      "group": "Ferry",
+      "count": 4787,
+      "files": [
+        "Ferry.json"
+      ]
+    },
+    {
+      "group": "Gas",
+      "count": 114,
+      "files": [
+        "Gas.json"
+      ]
+    },
+    {
+      "group": "Plant",
+      "count": 28,
+      "files": [
+        "Plant.json"
+      ]
+    },
+    {
+      "group": "기타",
+      "count": 1404,
+      "files": [
+        "기타.json"
+      ]
+    }
+  ]
+}

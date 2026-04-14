@@ -234,7 +234,7 @@ tbody td{padding:8px 11px;color:var(--tx);white-space:nowrap;max-width:160px;ove
   </div>
 
   <div class="cgrid">
-    <div class="cc"><div class="ctitle">건조 연도별 추이</div><div class="cw" id="cw-year" style="height:300px"><canvas id="c-year" role="img" aria-label="건조 연도별 선박 수"></canvas></div></div>
+    <div class="cc"><div class="ctitle" id="year-chart-title">건조 연도별 추이</div><div class="cw" id="cw-year" style="height:300px"><canvas id="c-year" role="img" aria-label="건조 연도별 선박 수"></canvas></div></div>
     <div class="cc"><div class="ctitle">Vessel Type TOP 15 <span style="font-size:10px;color:var(--tx3);font-weight:400">(클릭 필터)</span></div><div class="cw" style="height:300px"><canvas id="c-vtype" role="img" aria-label="vessel type 막대"></canvas></div></div>
     <div class="cc" style="display:none"><div class="ctitle">엔진 타입 분포</div><div class="cw"><canvas id="c-hull" role="img" aria-label="엔진 타입 도넛"></canvas></div></div>
     <div class="cc" style="display:none"><div class="ctitle">엔진명 TOP 12</div><div class="cw" style="height:300px"><canvas id="c-cat" role="img" aria-label="엔진명 막대"></canvas></div></div>
@@ -267,6 +267,7 @@ const COLS=[
 
 let loaded={},curData=[],filtered=[],curGrp="__all__",charts={},page=1,sortCol=null,sortDir=1;
 let excludedFlags=new Set();
+let selectedYear=null;
 const PG=100;
 let isDark=false;
 
@@ -389,13 +390,15 @@ function getUniq(key){const s=new Set();curData.forEach(r=>{if(r[key])s.add(Stri
 function popSel(id,items){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">전체</option>';items.forEach(v=>el.innerHTML+=`<option value="${v}">${v}</option>`);}
 function initSelects(){}
 
-["f-yr-from","f-yr-to","f-gt-min","f-gt-max","f-w-min","f-w-max","f-d-min","f-d-max","f-loa-min","f-loa-max"].forEach(id=>document.getElementById(id).addEventListener("input",debounce(applyFilters,280)));
+["f-gt-min","f-gt-max","f-w-min","f-w-max","f-d-min","f-d-max","f-loa-min","f-loa-max"].forEach(id=>document.getElementById(id).addEventListener("input",debounce(applyFilters,280)));
+["f-yr-from","f-yr-to"].forEach(id=>document.getElementById(id).addEventListener("input",debounce(()=>{selectedYear=null;applyFilters();},280)));
 document.getElementById("f-q").addEventListener("input",debounce(applyFilters,180));
 document.getElementById("btn-reset").addEventListener("click",()=>resetFilters(false));
 
 function resetFilters(silent){
   selectedVTypes.clear();
   excludedFlags.clear();
+  selectedYear=null;
   document.querySelectorAll(".vtype-item input").forEach(cb=>cb.checked=false);
   document.getElementById("vtype-excl").checked=false;
   ["f-yr-to","f-gt-min","f-gt-max","f-w-min","f-w-max","f-d-min","f-d-max","f-loa-min","f-loa-max","f-q"].forEach(id=>document.getElementById(id).value="");
@@ -429,6 +432,7 @@ function applyFilters(){
       if(!excl&&!match)return false;
     }
     const yr=parseYear(r.built_year); if(!isNaN(yr)&&yr>0&&(yr<yrF||yr>yrT))return false; // NaN(빈값)은 필터 통과
+    if(selectedYear!==null){if(parseYear(r.built_year)!==selectedYear)return false;}
     const gt=+r.gross_tonnage; if(r.gross_tonnage&&gt&&(gt<gtMn||gt>gtMx))return false;
     const loa=+r.length_overall; if(r.length_overall&&loa&&(loa<loaMn||loa>loaMx))return false;
     const w=+r.width; if(r.width&&w&&(w<wMn||w>wMx))return false;
@@ -439,7 +443,7 @@ function applyFilters(){
 
   let ac=0;
   if(hasVtype)ac++;
-  if(yrF||yrT<9999)ac++; if(gtMn||gtMx<Infinity)ac++;
+  if(selectedYear!==null)ac++; else if(yrF||yrT<9999)ac++; if(gtMn||gtMx<Infinity)ac++;
   if(loaMn||loaMx<Infinity)ac++; if(wMn||wMx<Infinity)ac++; if(dMn||dMx<Infinity)ac++; if(q)ac++;
   const fcEl=document.getElementById("fcount");
   fcEl.textContent=ac; fcEl.classList.toggle("has",ac>0);
@@ -492,15 +496,37 @@ function gridColor(){return isDark?"rgba(255,255,255,.08)":"rgba(0,0,0,.09)";}
 function legColor(){return isDark?"#cbd5e1":"#1e293b";}
 
 function renderCharts(){
+  // 건조 연도 타이틀 업데이트
+  const yearTitleEl=document.getElementById("year-chart-title");
+  if(yearTitleEl)yearTitleEl.textContent=selectedYear?"건조 연도별 추이 ("+selectedYear+"년 선택 — 재클릭 해제)":"건조 연도별 추이";
   // 건조 연도
   const yc={};
   filtered.forEach(r=>{const y=parseYear(r.built_year);if(!isNaN(y)&&y>1900&&y<=2030)yc[y]=(yc[y]||0)+1;});
   const yks=Object.keys(yc).sort();
   dst("c-year");
+  const yearPointColors=yks.map(y=>+y===selectedYear?"#f59e0b":"#14b8a6");
+  const yearPointSizes=yks.map(y=>+y===selectedYear?7:(yks.length>60?0:3));
   charts["c-year"]=new Chart(document.getElementById("c-year"),{type:"line",
-    data:{labels:yks,datasets:[{data:yks.map(y=>yc[y]),borderColor:"#14b8a6",backgroundColor:"rgba(20,184,166,.08)",borderWidth:2,pointRadius:yks.length>60?0:3,pointHoverRadius:6,pointHoverBackgroundColor:"#14b8a6",fill:true,tension:.35}]},
+    data:{labels:yks,datasets:[{data:yks.map(y=>yc[y]),borderColor:"#14b8a6",backgroundColor:"rgba(20,184,166,.08)",borderWidth:2,
+      pointRadius:yearPointSizes,pointHoverRadius:7,
+      pointBackgroundColor:yearPointColors,pointBorderColor:yearPointColors,
+      fill:true,tension:.35}]},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{mode:"index",intersect:false,callbacks:{title:i=>i[0].label+"년",label:i=>i.parsed.y.toLocaleString()+"척"}}},
+      plugins:{legend:{display:false},tooltip:{mode:"index",intersect:false,callbacks:{
+        title:i=>i[0].label+"년"+(+i[0].label===selectedYear?" ✓ 필터 중":""),
+        label:i=>i.parsed.y.toLocaleString()+"척 (클릭하여 필터)"}}},
+      onClick:(e,els)=>{
+        if(!els.length)return;
+        const yr=+yks[els[0].index];
+        if(selectedYear===yr){selectedYear=null;}  // 재클릭 시 해제
+        else{selectedYear=yr;}
+        // f-yr-from, f-yr-to 입력값 동기화
+        if(selectedYear!==null){
+          document.getElementById("f-yr-from").value="";
+          document.getElementById("f-yr-to").value="";
+        }
+        applyFilters();
+      },
       scales:{x:{ticks:{color:tickColor(),font:{size:10},autoSkip:true,maxTicksLimit:14},grid:{display:false}},y:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false}}}}});
 
   // Vessel Type - 클릭으로 필터

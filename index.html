@@ -504,30 +504,50 @@ function renderCharts(){
   filtered.forEach(r=>{const y=parseYear(r.built_year);if(!isNaN(y)&&y>1900&&y<=2030)yc[y]=(yc[y]||0)+1;});
   const yks=Object.keys(yc).sort();
   dst("c-year");
-  const yearPointColors=yks.map(y=>+y===selectedYear?"#f59e0b":"#14b8a6");
-  const yearPointSizes=yks.map(y=>+y===selectedYear?7:(yks.length>60?0:3));
-  charts["c-year"]=new Chart(document.getElementById("c-year"),{type:"line",
-    data:{labels:yks,datasets:[{data:yks.map(y=>yc[y]),borderColor:"#14b8a6",backgroundColor:"rgba(20,184,166,.08)",borderWidth:2,
-      pointRadius:yearPointSizes,pointHoverRadius:7,
-      pointBackgroundColor:yearPointColors,pointBorderColor:yearPointColors,
-      fill:true,tension:.35}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{mode:"index",intersect:false,callbacks:{
-        title:i=>i[0].label+"년"+(+i[0].label===selectedYear?" ✓ 필터 중":""),
-        label:i=>i.parsed.y.toLocaleString()+"척 (클릭하여 필터)"}}},
-      onClick:(e,els)=>{
-        if(!els.length)return;
-        const yr=+yks[els[0].index];
-        if(selectedYear===yr){selectedYear=null;}  // 재클릭 시 해제
-        else{selectedYear=yr;}
-        // f-yr-from, f-yr-to 입력값 동기화
-        if(selectedYear!==null){
+  // 선택 연도 상태에 따라 차트 구성 분기
+  if(selectedYear!==null){
+    // 선택된 연도만 표시: 단일 점을 차트 중앙에 배치
+    const selIdx=yks.indexOf(String(selectedYear));
+    const selCount=selIdx>=0?yc[String(selectedYear)]:0;
+    // 앞뒤 패딩 레이블로 가운데 배치
+    const padLabels=["","",String(selectedYear),"",""];
+    const padData=[null,null,selCount,null,null];
+    dst("c-year");
+    charts["c-year"]=new Chart(document.getElementById("c-year"),{type:"line",
+      data:{labels:padLabels,datasets:[{data:padData,borderColor:"#f59e0b",backgroundColor:"rgba(245,158,11,.08)",borderWidth:2,
+        pointRadius:[0,0,10,0,0],pointHoverRadius:12,
+        pointBackgroundColor:"#f59e0b",pointBorderColor:"#f59e0b",
+        fill:true,tension:.35,spanGaps:false}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{
+          title:()=>selectedYear+"년 ✓ 필터 중",
+          label:i=>i.parsed.y!==null?i.parsed.y.toLocaleString()+"척 (재클릭하여 해제)":""}}},
+        onClick:()=>{selectedYear=null;applyFilters();},
+        scales:{
+          x:{ticks:{color:tickColor(),font:{size:10}},grid:{display:false}},
+          y:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false},
+            min:0,max:Math.max(selCount*1.5,10)}}}});
+  } else {
+    // 일반 상태: 전체 꺾은선, 점 없음
+    dst("c-year");
+    charts["c-year"]=new Chart(document.getElementById("c-year"),{type:"line",
+      data:{labels:yks,datasets:[{data:yks.map(y=>yc[y]),borderColor:"#14b8a6",backgroundColor:"rgba(20,184,166,.08)",borderWidth:2,
+        pointRadius:0,pointHoverRadius:6,pointHoverBackgroundColor:"#14b8a6",
+        fill:true,tension:.35}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{mode:"index",intersect:false,callbacks:{
+          title:i=>i[0].label+"년",
+          label:i=>i.parsed.y.toLocaleString()+"척 (클릭하여 필터)"}}},
+        onClick:(e,els)=>{
+          if(!els.length)return;
+          const yr=+yks[els[0].index];
+          selectedYear=yr;
           document.getElementById("f-yr-from").value="";
           document.getElementById("f-yr-to").value="";
-        }
-        applyFilters();
-      },
-      scales:{x:{ticks:{color:tickColor(),font:{size:10},autoSkip:true,maxTicksLimit:14},grid:{display:false}},y:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false}}}}});
+          applyFilters();
+        },
+        scales:{x:{ticks:{color:tickColor(),font:{size:10},autoSkip:true,maxTicksLimit:14},grid:{display:false}},y:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false}}}}});
+  }
 
   // Vessel Type - 클릭으로 필터
   const vt=cntBy(filtered,"vessel_type",15);

@@ -522,7 +522,7 @@ function renderCharts(){
         plugins:{legend:{display:false},tooltip:{callbacks:{
           title:()=>selectedYear+"년 ✓ 필터 중",
           label:i=>i.parsed.y!==null?i.parsed.y.toLocaleString()+"척 (재클릭하여 해제)":""}}},
-        onClick:()=>{selectedYear=null;applyFilters();},
+        onClick:()=>{selectedYear=null;if(!document.getElementById('f-yr-from').value)document.getElementById('f-yr-from').value=new Date().getFullYear()-50;applyFilters();},
         scales:{
           x:{ticks:{color:tickColor(),font:{size:10}},grid:{display:false}},
           y:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false},

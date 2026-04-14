@@ -528,11 +528,13 @@ function renderCharts(){
           y:{ticks:{color:tickColor(),font:{size:10}},grid:{color:gridColor()},border:{display:false},
             min:0,max:Math.max(selCount*1.5,10)}}}});
   } else {
-    // 일반 상태: 전체 꺾은선, 점 없음
+    // 일반 상태: 전체 꺾은선, 점 표시 + 클릭 가능
     dst("c-year");
     charts["c-year"]=new Chart(document.getElementById("c-year"),{type:"line",
       data:{labels:yks,datasets:[{data:yks.map(y=>yc[y]),borderColor:"#14b8a6",backgroundColor:"rgba(20,184,166,.08)",borderWidth:2,
-        pointRadius:0,pointHoverRadius:6,pointHoverBackgroundColor:"#14b8a6",
+        pointRadius:yks.length>80?3:4,
+        pointHoverRadius:7,
+        pointBackgroundColor:"#14b8a6",pointBorderColor:"#14b8a6",
         fill:true,tension:.35}]},
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false},tooltip:{mode:"index",intersect:false,callbacks:{
